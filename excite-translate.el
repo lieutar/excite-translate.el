@@ -63,9 +63,31 @@
         "JAEN" "ENJA"
         )))
 
+(defconst excite-translate-result-mode-back-to nil)
+
+(defconst excite-translate-result-mode-map
+  (let ((km (make-sparse-keymap)))
+    (define-key km (kbd "q") 'excite-translate-result-mode-quit)
+    km))
+
+(define-derived-mode excite-translate-result-mode
+  text-mode
+  "excite-translate-result"
+  (make-variable-buffer-local
+   'excite-translate-result-mode-back-to))
+
+(defun excite-translate-result-mode-quit ()
+  (interactive)
+  (let ((backto (and (windowp excite-translate-result-mode-back-to)
+                     excite-translate-result-mode-back-to)))
+    (kill-buffer (current-buffer))
+    (when backto
+      (select-window backto))))
+
 (defun excite-translate-region (beg end &optional type)
   (interactive "r")
-  (let* ((before (buffer-substring-no-properties beg end))
+  (let* ((cwin   (selected-window))
+         (before (buffer-substring-no-properties beg end))
          (type   (or type
                      (excite-translate-guess-type before)
                      ))
@@ -80,6 +102,8 @@
           (insert "\n----\n")
           (insert result)
           (goto-char (point-min)))
+        (excite-translate-result-mode)
+        (setq excite-translate-result-mode-back-to cwin)
         (pop-to-buffer buf)))
     result))
 
