@@ -84,32 +84,35 @@
     (when backto
       (select-window backto))))
 
-(defun excite-translate-region (beg end &optional type)
-  (interactive "r")
+(defun excite-translate-popup (before result)
+  (let ((buf (get-buffer-create "*excite-translate*")))
+    (set-buffer buf)
+    (setq buffer-read-only t)
+    (let ((buffer-read-only nil))
+      (delete-region (point-min) (point-max))
+      (insert before)
+      (insert "\n----\n")
+      (insert result)
+      (goto-char (point-min)))
+    (excite-translate-result-mode)
+    (setq excite-translate-result-mode-back-to cwin)
+    (pop-to-buffer buf)))
+
+(defun excite-translate (before &optional type)
+  (interactive 
+   (list (if mark-active
+             (buffer-substring-no-properties
+              (region-beginning) (region-end))
+           (read-string "from: "))))
+
   (let* ((cwin   (selected-window))
-         (before (buffer-substring-no-properties beg end))
          (type   (or type
                      (excite-translate-guess-type before)
                      ))
          (result (excite-translate-* before type)))
     (when (interactive-p)
-      (let ((buf (get-buffer-create "*excite-translate*")))
-        (set-buffer buf)
-        (setq buffer-read-only t)
-        (let ((buffer-read-only nil))
-          (delete-region (point-min) (point-max))
-          (insert before)
-          (insert "\n----\n")
-          (insert result)
-          (goto-char (point-min)))
-        (excite-translate-result-mode)
-        (setq excite-translate-result-mode-back-to cwin)
-        (pop-to-buffer buf)))
+      (excite-translate-popup before result))
     result))
-
-
-;;(excite-translate-enja "This is a pen.")
-;;(excite-translate-jaen "これはペンです。")
 
 
 (provide 'excite-translate)
