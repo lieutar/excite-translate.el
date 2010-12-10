@@ -28,6 +28,15 @@
 
 (require 'kael-http)
 
+(defun excite-translate-decode-html-entities (str)
+  (while (string-match "&#\\([0-9]+\\);" str)
+    (let ((char (string-to-number (match-string 1 str))))
+      (setq str
+            (concat (substring str 0 (match-beginning 0))
+                    (decode-coding-string (string char) 'utf-8)
+                    (substring str (match-end 0))))))
+  str)
+
 (defun excite-translate-* (before type)
   (let ((buf (kael-http-post
               "http://www.excite.co.jp/world/english/"
@@ -41,7 +50,8 @@
         (setq result (match-string-no-properties 1))
       )
     (kill-buffer buf)
-    (decode-coding-string result 'utf-8)))
+    (excite-translate-decode-html-entities
+     (decode-coding-string result 'utf-8))))
 
 (defun excite-translate-enja (before) (excite-translate-* before "ENJA"))
 (defun excite-translate-jaen (before) (excite-translate-* before "JAEN"))
